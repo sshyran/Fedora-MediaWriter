@@ -87,40 +87,40 @@ jobs:
         TAG_NAME=$(bash ./dist/get-tag-name.sh)
         bash dist/mac/build.sh build
     - name: Insert dependencies
-      if: github.event_name == 'release'
+      if: github.event_name != 'release'
       run: |
         TAG_NAME=$(bash ./dist/get-tag-name.sh)
         bash dist/mac/build.sh deps
     - name: Sign (TBD)
-      if: github.event_name == 'release'
+      if: github.event_name != 'release'
       run: |
         TAG_NAME=$(bash ./dist/get-tag-name.sh)
         true # bash  dist/mac/build.sh sign
     - name: Package
-      if: github.event_name == 'release'
+      if: github.event_name != 'release'
       run: |
         TAG_NAME=$(bash ./dist/get-tag-name.sh)
         cd build/app
         create-dmg "Fedora Media Writer.app" || true # without signing, create-dmg returns an error code
-        mv Fedora*.dmg ../../FedoraMediaWriter-osx-$TAG_NAME.unnotarized.dmg
+        mv Fedora*.dmg ../../FedoraMediaWriter-osx-unnotarized.dmg
     - name: Notarize (TBD)
-      if: github.event_name == 'release'
+      if: github.event_name != 'release'
       run: |
         TAG_NAME=$(bash ./dist/get-tag-name.sh)
         true # bash dist/mac/build.sh notarize
-    #- name: Upload artifacts to GitHub
-      #if: github.event_name != 'release'
-      #uses: actions/upload-artifact@v2
-      #with:
-            #name: FedoraMediaWriter-osx-unnotarized.dmg
-            #path: FedoraMediaWriter-osx-unnotarized.dmg
+    - name: Upload artifacts to GitHub
+      if: github.event_name != 'release'
+      uses: actions/upload-artifact@v2
+      with:
+            name: FedoraMediaWriter-osx-unnotarized.dmg
+            path: FedoraMediaWriter-osx-unnotarized.dmg
 
-    - name: Upload to GitHub
-      if: github.event_name == 'release'
-      shell: bash
-      run: |
-        TAG_NAME=$(bash ./dist/get-tag-name.sh)
-        bash ./dist/upload-to-github.sh github_api_token=${{ secrets.GITHUB_TOKEN }} tag="$TAG_NAME" filename="FedoraMediaWriter-osx-$TAG_NAME.unnotarized.dmg"
+    #- name: Upload to GitHub
+      #if: github.event_name == 'release'
+      #shell: bash
+      #run: |
+        #TAG_NAME=$(bash ./dist/get-tag-name.sh)
+        #bash ./dist/upload-to-github.sh github_api_token=${{ secrets.GITHUB_TOKEN }} tag="$TAG_NAME" filename="FedoraMediaWriter-osx-$TAG_NAME.unnotarized.dmg"
 
   Windows:
     runs-on: windows-latest
@@ -170,7 +170,7 @@ jobs:
         cmake -DCMAKE_SH="CMAKE_SH-NOTFOUND" -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$Qt5_Dir" ..
         mingw32-make -j2 VERBOSE=1
     - name: Windeployqt
-      if: github.event_name == 'release'
+      if: github.event_name != 'release'
       shell: bash
       run: |
         mkdir build/app/release
@@ -190,7 +190,7 @@ jobs:
         cp $Qt5_Dir/bin/liblzma.dll .
         cp /c/Program\ Files/OpenSSL/bin/*.dll .
     - name: Installer
-      if: github.event_name == 'release'
+      if: github.event_name != 'release'
       shell: bash
       run: |
         TAG_NAME=$(bash ./dist/get-tag-name.sh)
@@ -214,10 +214,16 @@ jobs:
         unix2dos < "LICENSE.GPL-2" > "build/app/release/LICENSE.GPL-2.txt"
         unix2dos < "LICENSE.LGPL-2" > "build/app/release/LICENSE.LGPL-2.txt"
         makensis -DCERTPATH="" -DCERTPASS="" dist/win/mediawriter_native.tmp.nsi
-        mv dist/win/FMW-setup.exe ./"FedoraMediaWriter-win64-$TAG_NAME.exe"
-    - name: Upload to GitHub
-      if: github.event_name == 'release'
-      shell: bash
-      run: |
-        TAG_NAME=$(bash ./dist/get-tag-name.sh)
-        bash ./dist/upload-to-github.sh github_api_token=${{ secrets.GITHUB_TOKEN }} tag="$TAG_NAME" filename="FedoraMediaWriter-win64-$TAG_NAME.exe"
+        mv dist/win/FMW-setup.exe ./"FedoraMediaWriter-win64.exe"
+    - name: Upload artifacts to GitHub
+      if: github.event_name != 'release'
+      uses: actions/upload-artifact@v2
+      with:
+            name: FedoraMediaWriter-win64.exe
+            path: FedoraMediaWriter-win64.exe
+    #- name: Upload to GitHub
+      #if: github.event_name == 'release'
+      #shell: bash
+      #run: |
+        #TAG_NAME=$(bash ./dist/get-tag-name.sh)
+        #bash ./dist/upload-to-github.sh github_api_token=${{ secrets.GITHUB_TOKEN }} tag="$TAG_NAME" filename="FedoraMediaWriter-win64-$TAG_NAME.exe"
